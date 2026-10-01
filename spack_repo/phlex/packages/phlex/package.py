@@ -71,10 +71,20 @@ class Phlex(CMakePackage, FnalGithubPackage):
     # virtual constraint such as ``tbb@2023:`` does not constrain the provider's
     # package version. Select and version the concrete provider explicitly.
     with when("@0.4:"):
-        if sys.platform == "darwin":
-            requires("^[virtuals=tbb] intel-tbb@2023:")
-        else:
-            requires("^[virtuals=tbb] intel-oneapi-tbb@2023:")
+        # Base requirement for tbb provider
+        requires("^[virtuals=tbb] intel-tbb@2023:")
+
+        # Prefer intel-oneapi-tbb on Linux x86_64
+        requires(
+            "^[virtuals=tbb] intel-oneapi-tbb@2023:",
+            when="platform=linux target=x86_64:",
+        )
+    # Prevent intel-tbb from being selected on Linux x86_64
+    conflicts(
+        "^[virtuals=tbb] intel-tbb",
+        when="platform=linux target=x86_64:",
+        msg="Use intel-oneapi-tbb on Linux x86_64",
+    )
 
     depends_on("catch2", type=("build", "test"))
 
